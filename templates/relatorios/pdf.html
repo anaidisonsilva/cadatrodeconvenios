@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 12mm;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 10.5px;
+      color: #111;
+    }
+
+    h1 { margin: 0 0 4px 0; font-size: 16px; }
+    .sub { color:#555; margin:0 0 10px 0; font-size: 10.5px; }
+
+    .grid { display: table; width: 100%; table-layout: fixed; margin-bottom: 10px; }
+    .col { display: table-cell; vertical-align: top; padding-right: 10px; }
+    .col:last-child { padding-right: 0; }
+
+    .box {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 8px;
+      margin-bottom: 8px;
+    }
+    .box-title {
+      font-size: 10px;
+      color: #666;
+      margin: 0 0 4px 0;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+
+    .filters { font-size: 10.5px; line-height: 1.35; }
+    .filters b { color: #222; }
+    .filters .item { margin-bottom: 2px; }
+
+    .kpis { display: table; width: 100%; table-layout: fixed; margin-bottom: 10px; }
+    .kpi {
+      display: table-cell;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 8px;
+      margin-right: 8px;
+      vertical-align: top;
+    }
+    .kpi:last-child { margin-right: 0; }
+    .kpi .label { font-size: 10px; color:#666; text-transform: uppercase; letter-spacing:.3px; }
+    .kpi .value { font-size: 14px; font-weight: bold; margin-top: 4px; }
+
+    .charts {
+      width: 100%;
+      border-spacing: 0;
+      border-collapse: separate;
+      margin: 6px 0 10px 0;
+    }
+    .charts td {
+      width: 33.33%;
+      padding: 6px;
+      vertical-align: top;
+    }
+    .chart-box {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 6px;
+      height: 100%;
+    }
+    .chart-title {
+      font-size: 11px;
+      font-weight: bold;
+      margin: 0 0 6px 0;
+    }
+    .chart-img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 5px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #f2f2f2; font-size: 10px; }
+
+    .right { text-align: right; }
+    .nowrap { white-space: nowrap; }
+    .muted { color: #666; }
+
+    td.right, td.nowrap { white-space: nowrap; }
+
+    thead { display: table-header-group; }
+    tfoot { display: table-row-group; }
+  </style>
+</head>
+
+<body>
+  <h1>{{ titulo }}</h1>
+  <p class="sub">
+    Gerado em {{ gerado_em|date:"d/m/Y H:i" }} —
+    Total de convênios: <b>{{ qtd_convenios }}</b>
+  </p>
+
+  <!-- FILTROS + KPIs -->
+  <div class="grid">
+    <div class="col" style="width: 45%;">
+      <div class="box">
+        <p class="box-title">Filtros aplicados</p>
+
+        <div class="filters">
+          <div class="item"><b>Data início:</b> {{ filtros.data_ini|default:"-" }}</div>
+          <div class="item"><b>Data fim:</b> {{ filtros.data_fim|default:"-" }}</div>
+          <div class="item"><b>Órgão:</b> {{ filtros.orgao|default:"-" }}</div>
+          <div class="item"><b>Parlamentar:</b> {{ filtros.parlamentar|default:"-" }}</div>
+          <div class="item"><b>Tipo:</b> {{ filtros.tipo|default:"-" }}</div>
+          <div class="item"><b>Status:</b> {{ filtros.status|default:"-" }}</div>
+
+          <div class="item">
+            <b>Repasse recebido:</b>
+            {% if filtros.repasse_recebido == "1" %}
+              Somente pagos
+            {% elif filtros.repasse_recebido == "0" %}
+              Não pagos
+            {% else %}
+              Todos
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col" style="width: 55%;">
+      <div class="kpis">
+        <div class="kpi">
+          <div class="label">Repasse (filtrado)</div>
+          <div class="value">R$ {{ total_repasse|floatformat:2 }}</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Contrapartida (filtrada)</div>
+          <div class="value">R$ {{ total_contrapartida|floatformat:2 }}</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Total geral</div>
+          <div class="value">R$ {{ total_geral|floatformat:2 }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ GRÁFICOS NO PDF -->
+  <table class="charts">
+    <tr>
+      <td>
+        <div class="chart-box">
+          <p class="chart-title">Convênios por Tipo</p>
+          {% if grafico_tipo %}
+            <img class="chart-img" src="{{ grafico_tipo }}" alt="Gráfico por tipo">
+          {% else %}
+            <div class="muted">Sem dados para gráfico.</div>
+          {% endif %}
+        </div>
+      </td>
+
+      <td>
+        <div class="chart-box">
+          <p class="chart-title">Convênios por Status</p>
+          {% if grafico_status %}
+            <img class="chart-img" src="{{ grafico_status }}" alt="Gráfico por status">
+          {% else %}
+            <div class="muted">Sem dados para gráfico.</div>
+          {% endif %}
+        </div>
+      </td>
+
+      <td>
+        <div class="chart-box">
+          <p class="chart-title">Repasse por mês</p>
+          {% if grafico_mes %}
+            <img class="chart-img" src="{{ grafico_mes }}" alt="Gráfico repasse por mês">
+          {% else %}
+            <div class="muted">Sem dados para gráfico.</div>
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- ✅ TABELA FINAL (SÓ AS COLUNAS BOAS) -->
+  <table>
+    <thead>
+      <tr>
+        <th class="nowrap">Nº Convênio</th>
+        <th>Objeto</th>
+        <th>Órgão</th>
+        <th class="nowrap">Início</th>
+        <th class="nowrap">Fim</th>
+        <th>Status</th>
+        <th class="right nowrap">Repasse (R$)</th>
+        <th class="right nowrap">Contrapartida (R$)</th>
+        <th class="right nowrap">Total (R$)</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="nowrap">{{ r.numero }}</td>
+        <td>{{ r.objeto }}</td>
+        <td>{{ r.orgao }}</td>
+        <td class="nowrap">{{ r.inicio|date:"d/m/Y" }}</td>
+        <td class="nowrap">{{ r.fim|date:"d/m/Y" }}</td>
+        <td>{{ r.status }}</td>
+        <td class="right nowrap">{{ r.repasse|floatformat:2 }}</td>
+        <td class="right nowrap">{{ r.contrapartida|floatformat:2 }}</td>
+        <td class="right nowrap">{{ r.total|floatformat:2 }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9">Nenhum convênio encontrado.</td></tr>
+      {% endfor %}
+    </tbody>
+
+    <tfoot>
+      <tr>
+        <td colspan="6" class="right"><b>TOTAL REPASSE</b></td>
+        <td class="right nowrap"><b>{{ total_repasse|floatformat:2 }}</b></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td colspan="7" class="right"><b>TOTAL CONTRAPARTIDA</b></td>
+        <td class="right nowrap"><b>{{ total_contrapartida|floatformat:2 }}</b></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td colspan="8" class="right"><b>VALOR GERAL (REPASSE + CONTRAPARTIDA)</b></td>
+        <td class="right nowrap"><b>{{ total_geral|floatformat:2 }}</b></td>
+      </tr>
+    </tfoot>
+  </table>
+</body>
+</html>

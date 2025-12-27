@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+{% load br_filters %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h2 class="m-0">Relatórios</h2>
+
+  <a id="btnPdfTop" class="btn btn-danger"
+     href="{% url 'relatorios:relatorio_pdf' %}?{{ request.GET.urlencode }}">
+    Exportar PDF
+  </a>
+</div>
+
+<!-- FILTROS -->
+<div class="card mb-3">
+  <div class="card-body">
+    <form id="filtrosForm" method="get" class="row g-3 align-items-end">
+
+      <div class="col-md-2">
+        <label class="form-label">Data início</label>
+        <input class="form-control" type="date" name="data_ini" value="{{ request.GET.data_ini }}">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Data fim</label>
+        <input class="form-control" type="date" name="data_fim" value="{{ request.GET.data_fim }}">
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Órgão concedente</label>
+        <input class="form-control" type="text" name="orgao" placeholder="Ex.: Ministério..."
+               value="{{ request.GET.orgao }}">
+      </div>
+
+      <!-- ✅ NOVO FILTRO: PARLAMENTAR -->
+      <div class="col-md-3">
+        <label class="form-label">Parlamentar</label>
+        <input class="form-control" type="text" name="parlamentar" placeholder="Ex.: Deputado..."
+               value="{{ request.GET.parlamentar }}">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Tipo</label>
+        <input class="form-control" type="text" name="tipo" placeholder="Tipo"
+               value="{{ request.GET.tipo }}">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Status</label>
+        <select class="form-select" name="status">
+          <option value="">Todos</option>
+          <option value="OK" {% if request.GET.status == "OK" %}selected{% endif %}>OK</option>
+          <option value="Vencendo" {% if request.GET.status == "Vencendo" %}selected{% endif %}>Vencendo</option>
+          <option value="Vencidos" {% if request.GET.status == "Vencidos" %}selected{% endif %}>Vencidos</option>
+        </select>
+      </div>
+
+      <!-- ✅ FILTRO: REPASSE RECEBIDO -->
+      <div class="col-md-3">
+        <label class="form-label">Repasse recebido</label>
+        <select class="form-select" name="repasse_recebido">
+          <option value="" {% if request.GET.repasse_recebido == "" or request.GET.repasse_recebido is None %}selected{% endif %}>Todos</option>
+          <option value="1" {% if request.GET.repasse_recebido == "1" %}selected{% endif %}>Somente pagos</option>
+          <option value="0" {% if request.GET.repasse_recebido == "0" %}selected{% endif %}>Não pagos</option>
+        </select>
+      </div>
+
+      <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+        <button type="button" id="btnLimpar" class="btn btn-outline-secondary">Limpar</button>
+
+        <a id="btnPdf" class="btn btn-danger ms-auto"
+           href="{% url 'relatorios:relatorio_pdf' %}?{{ request.GET.urlencode }}">
+          Exportar PDF
+        </a>
+      </div>
+
+    </form>
+
+    <div id="erroBox" class="alert alert-danger mt-3 d-none"></div>
+  </div>
+</div>
+
+<!-- RESUMO -->
+<div class="row row-cards mb-4">
+  <div class="col-md-3">
+    <div class="card card-sm">
+      <div class="card-body">
+        <div class="subheader">Convênios (filtrados)</div>
+        <div class="h1" id="cardQtd">-</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card card-sm">
+      <div class="card-body">
+        <div class="subheader">Repasse (filtrado)</div>
+        <div class="h1" id="cardRepasse">R$ -</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card card-sm">
+      <div class="card-body">
+        <div class="subheader">Contrapartida (filtrada)</div>
+        <div class="h1" id="cardContra">R$ -</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card card-sm bg-azure-lt">
+      <div class="card-body">
+        <div class="subheader">Total Geral</div>
+        <div class="h1" id="cardTotal">R$ -</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GRÁFICOS -->
+<div class="row row-cards">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Convênios por Tipo</h3>
+      </div>
+      <div class="card-body">
+        <canvas id="chartTipo" height="130"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Convênios por Status</h3>
+      </div>
+      <div class="card-body">
+        <canvas id="chartStatus" height="130"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card mt-3">
+      <div class="card-header">
+        <h3 class="card-title">Repasse por mês</h3>
+      </div>
+      <div class="card-body">
+        <canvas id="chartMes" height="90"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TABELA -->
+<div class="card mt-4">
+  <div class="card-header">
+    <h3 class="card-title">Convênios retornados (conferência)</h3>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-vcenter">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nº Convênio</th>
+            <th>Órgão</th>
+            <th>Parlamentar</th>
+            <th>Tipo</th>
+            <th>Status</th>
+            <th>Pago?</th>
+            <th class="text-end">Repasse</th>
+            <th class="text-end">Contrapartida</th>
+            <th>Início</th>
+            <th>Fim</th>
+          </tr>
+        </thead>
+        <tbody id="listaTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const form = document.getElementById("filtrosForm");
+  const btnPdf = document.getElementById("btnPdf");
+  const btnPdfTop = document.getElementById("btnPdfTop");
+  const btnLimpar = document.getElementById("btnLimpar");
+  const erroBox = document.getElementById("erroBox");
+  const listaTbody = document.getElementById("listaTbody");
+
+  const cardQtd = document.getElementById("cardQtd");
+  const cardRepasse = document.getElementById("cardRepasse");
+  const cardContra = document.getElementById("cardContra");
+  const cardTotal = document.getElementById("cardTotal");
+
+  let chartTipo, chartStatus, chartMes;
+
+  function qsFromForm() {
+    return new URLSearchParams(new FormData(form)).toString();
+  }
+
+  function showError(msg) {
+    erroBox.classList.remove("d-none");
+    erroBox.textContent = msg;
+  }
+
+  function clearError() {
+    erroBox.classList.add("d-none");
+    erroBox.textContent = "";
+  }
+
+  function brMoney(n) {
+    if (n === null || n === undefined || n === "") return "R$ 0,00";
+    const v = Number(n) || 0;
+    return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  }
+
+  function yesNo(v) {
+    if (v === true || v === 1 || v === "1") return "SIM";
+    if (v === false || v === 0 || v === "0") return "NÃO";
+    return "-";
+  }
+
+  async function carregarRelatorios() {
+    clearError();
+
+    const qs = qsFromForm();
+
+    // PDF com filtros
+    const pdfUrl = "{% url 'relatorios:relatorio_pdf' %}?" + qs;
+    btnPdf.href = pdfUrl;
+    btnPdfTop.href = pdfUrl;
+
+    // Dados dos gráficos
+    const url = "{% url 'relatorios:relatorios_dados' %}?" + qs;
+
+    let resp;
+    try {
+      resp = await fetch(url);
+    } catch (e) {
+      showError("Falha ao conectar em /relatorios/dados/. Veja se o servidor está rodando.");
+      return;
+    }
+
+    let data;
+    try {
+      data = await resp.json();
+    } catch (e) {
+      showError("Resposta inválida do servidor (não é JSON).");
+      return;
+    }
+
+    if (!resp.ok || data.ok === false) {
+      showError("Erro em /relatorios/dados/: " + (data.error || resp.status));
+      return;
+    }
+
+    // Cards (calcula no front com base na lista)
+    const lista = data.lista || [];
+
+    const totalRepasse = lista.reduce((acc, r) => acc + (Number(r.valor_repasse) || 0), 0);
+    const totalContra  = lista.reduce((acc, r) => acc + (Number(r.valor_contrapartida) || 0), 0);
+    const totalGeral   = totalRepasse + totalContra;
+
+    cardQtd.textContent = data.qtd_total ?? lista.length ?? 0;
+    cardRepasse.textContent = brMoney(totalRepasse);
+    cardContra.textContent  = brMoney(totalContra);
+    cardTotal.textContent   = brMoney(totalGeral);
+
+    // Tabela
+    listaTbody.innerHTML = "";
+    lista.forEach(r => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.id}</td>
+        <td>${r.numero_convenio || "-"}</td>
+        <td>${r.orgao_concedente || "-"}</td>
+        <td>${r.parlamentar_nome || "-"}</td>
+        <td>${r.tipo || "-"}</td>
+        <td>${r.status || "-"}</td>
+        <td>${yesNo(r.repasse_recebido)}</td>
+        <td class="text-end">${brMoney(r.valor_repasse)}</td>
+        <td class="text-end">${brMoney(r.valor_contrapartida)}</td>
+        <td>${r.vigencia_inicio || "-"}</td>
+        <td>${r.vigencia_fim || "-"}</td>
+      `;
+      listaTbody.appendChild(tr);
+    });
+
+    // Gráfico: Tipo
+    const labelsTipo = (data.por_tipo || []).map(x => x.tipo);
+    const valuesTipo = (data.por_tipo || []).map(x => x.qtd);
+
+    if (chartTipo) chartTipo.destroy();
+    chartTipo = new Chart(document.getElementById("chartTipo"), {
+      type: "bar",
+      data: { labels: labelsTipo, datasets: [{ label: "Qtd", data: valuesTipo }] },
+      options: { responsive: true }
+    });
+
+    // Gráfico: Status
+    const labelsStatus = (data.por_status || []).map(x => x.status);
+    const valuesStatus = (data.por_status || []).map(x => x.qtd);
+
+    if (chartStatus) chartStatus.destroy();
+    chartStatus = new Chart(document.getElementById("chartStatus"), {
+      type: "doughnut",
+      data: { labels: labelsStatus, datasets: [{ label: "Qtd", data: valuesStatus }] },
+      options: { responsive: true }
+    });
+
+    // Gráfico: Repasse por mês
+    const labelsMes = (data.repasse_por_mes || []).map(x => x.mes);
+    const valuesMes = (data.repasse_por_mes || []).map(x => x.repasse);
+
+    if (chartMes) chartMes.destroy();
+    chartMes = new Chart(document.getElementById("chartMes"), {
+      type: "line",
+      data: { labels: labelsMes, datasets: [{ label: "Repasse (R$)", data: valuesMes, tension: 0.2 }] },
+      options: { responsive: true }
+    });
+  }
+
+  // Carrega ao abrir
+  carregarRelatorios();
+
+  // Aplicar filtros sem recarregar a página
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const qs = qsFromForm();
+    history.replaceState(null, "", "?" + qs);
+    carregarRelatorios();
+  });
+
+  btnLimpar.addEventListener("click", () => {
+    form.reset();
+    history.replaceState(null, "", location.pathname);
+    carregarRelatorios();
+  });
+</script>
+
+{% endblock %}

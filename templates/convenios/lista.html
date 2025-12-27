@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h2 class="m-0">Convênios</h2>
+  <a class="btn btn-primary" href="{% url 'convenios:novo' %}">+ Novo Convênio</a>
+</div>
+
+<form method="post"
+      action="{% url 'convenios:delete_selected' %}"
+      onsubmit="return confirm('Tem certeza que deseja apagar os convênios selecionados? Essa ação não pode ser desfeita.');">
+  {% csrf_token %}
+
+  <div class="d-flex gap-2 mb-2">
+    <button type="submit" class="btn btn-danger" id="btnApagarMassa" disabled>
+      Apagar selecionados
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-vcenter">
+        <thead>
+          <tr>
+            <th style="width:40px;">
+              <input type="checkbox" id="checkAll">
+            </th>
+            <th>TIPO</th>
+            <th>Nº CONVÊNIO</th>
+            <th>ÓRGÃO</th>
+            <th>VIGÊNCIA FIM</th>
+            <th>STATUS</th>
+            <th style="width:220px;">AÇÕES</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for c in convenios %}
+          <tr>
+            <td>
+              <input type="checkbox" name="ids" value="{{ c.id }}" class="rowCheck">
+            </td>
+
+            <td>{{ c.tipo|default:"-" }}</td>
+            <td>{{ c.numero_convenio|default:"-" }}</td>
+            <td>{{ c.orgao_concedente|default:"-" }}</td>
+            <td>
+              {% if c.vigencia_fim %}
+                {{ c.vigencia_fim|date:"d/m/Y" }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>{{ c.status|default:"-" }}</td>
+
+            <td class="d-flex gap-2">
+              <a class="btn btn-outline-primary btn-sm"
+                 href="{% url 'convenios:editar' c.id %}">
+                Editar
+              </a>
+
+              <form method="post"
+                    action="{% url 'convenios:apagar' c.id %}"
+                    onsubmit="return confirm('Apagar este convênio?');">
+                {% csrf_token %}
+                <button class="btn btn-outline-danger btn-sm" type="submit">
+                  Apagar
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-muted">Nenhum convênio encontrado.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</form>
+
+<script>
+  const checkAll = document.getElementById("checkAll");
+  const btnApagarMassa = document.getElementById("btnApagarMassa");
+
+  function updateButton() {
+    const anyChecked = document.querySelectorAll(".rowCheck:checked").length > 0;
+    btnApagarMassa.disabled = !anyChecked;
+  }
+
+  checkAll?.addEventListener("change", (e) => {
+    document.querySelectorAll(".rowCheck").forEach(cb => cb.checked = e.target.checked);
+    updateButton();
+  });
+
+  document.querySelectorAll(".rowCheck").forEach(cb => {
+    cb.addEventListener("change", () => {
+      if (!cb.checked && checkAll) checkAll.checked = false;
+      updateButton();
+    });
+  });
+
+  updateButton();
+</script>
+
+{% endblock %}

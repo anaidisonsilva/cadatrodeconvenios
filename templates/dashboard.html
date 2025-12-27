@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load br_filters %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h2 class="m-0">Dashboard</h2>
+  <a class="btn btn-outline-primary" href="/convenios/novo/">+ Novo Convênio</a>
+</div>
+
+<div class="row row-cards mb-4">
+  <div class="col-md-3">
+    <div class="card card-sm">
+      <div class="card-body">
+        <div class="subheader">Convênios</div>
+        <div class="h1">{{ total_convenios }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card card-sm">
+      <div class="card-body">
+        <div class="subheader">Repasse (total)</div>
+        <div class="h1">R$ {{ total_repasse|brl }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card card-sm">
+      <div class="card-body">
+        <div class="subheader">Contrapartida (total)</div>
+        <div class="h1">R$ {{ total_contrapartida|brl }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card card-sm bg-danger text-white">
+      <div class="card-body">
+        <div class="subheader">Vencem em 30 dias</div>
+        <div class="h1">{{ vencendo_30 }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row row-cards">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Convênios por tipo</h3>
+      </div>
+      <div class="card-body">
+        <canvas id="chartTipo" height="130"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Alertas de vigência</h3>
+      </div>
+      <div class="card-body">
+        <canvas id="chartAlertas" height="130"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card mt-3">
+      <div class="card-header">
+        <h3 class="card-title">Repasse por mês (últimos 12 meses)</h3>
+      </div>
+      <div class="card-body">
+        <canvas id="chartMes" height="90"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+async function carregarDashboard() {
+  const resp = await fetch("/api/dashboard/");
+  const data = await resp.json();
+
+  // 1) Por tipo
+  const labelsTipo = data.por_tipo.map(x => x.tipo);
+  const valuesTipo = data.por_tipo.map(x => x.qtd);
+
+  new Chart(document.getElementById("chartTipo"), {
+    type: "bar",
+    data: { labels: labelsTipo, datasets: [{ label: "Qtd", data: valuesTipo }] },
+    options: { responsive: true }
+  });
+
+  // 2) Alertas (cores fixas)
+  new Chart(document.getElementById("chartAlertas"), {
+    type: "doughnut",
+    data: {
+      labels: data.alertas.labels,
+      datasets: [{
+        label: "Convênios",
+        data: data.alertas.values,
+        backgroundColor: [
+          "#2FB344", // OK (verde)
+          "#F59F00", // Amarelo
+          "#D63939", // Vermelho
+          "#6C757D"  // Vencido (cinza)
+        ]
+      }]
+    },
+    options: { responsive: true }
+  });
+
+  // 3) Repasse por mês
+  new Chart(document.getElementById("chartMes"), {
+    type: "line",
+    data: {
+      labels: data.repasse_por_mes.labels,
+      datasets: [{ label: "Repasse (R$)", data: data.repasse_por_mes.values, tension: 0.2 }]
+    },
+    options: { responsive: true }
+  });
+}
+
+carregarDashboard();
+</script>
+
+{% endblock %}

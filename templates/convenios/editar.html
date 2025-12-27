@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Editar Convênio</h2>
+
+<form method="post" class="card">
+  {% csrf_token %}
+  <div class="card-body">
+    {{ form.as_p }}
+  </div>
+  <div class="card-footer text-end">
+    <a class="btn btn-secondary" href="{% url 'convenios:list' %}">Cancelar</a>
+    <button class="btn btn-success">Salvar</button>
+  </div>
+</form>
+{% endblock %}

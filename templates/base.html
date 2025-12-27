@@ -1,0 +1,44 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <title>Gestão de Convênios</title>
+
+  <!-- TABLER CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="page">
+  <aside class="navbar navbar-vertical navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <h1 class="navbar-brand text-white">Gestão de Convênios</h1>
+      <ul class="navbar-nav pt-lg-3">
+        <li class="nav-item">
+          <a class="nav-link" href="/dashboard/">📊 Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/convenios/">📄 Convênios</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/convenios/novo/">➕ Novo Convênio</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/relatorios/">📑 Relatórios</a>
+        </li>
+      </ul>
+    </div>
+  </aside>
+
+  <div class="page-wrapper">
+    <div class="container-xl mt-4">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+
+<!-- TABLER JS -->
+<script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
+</body>
+</html>

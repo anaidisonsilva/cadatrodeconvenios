@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h2 class="m-0">{% if editando %}Editar Convênio{% else %}Novo Convênio{% endif %}</h2>
+</div>
+
+<form method="post" class="card">
+  {% csrf_token %}
+
+  <div class="card-body">
+
+    <!-- Tipo -->
+    <div class="mb-3">
+      <label class="form-label" for="{{ form.tipo.id_for_label }}">Tipo</label>
+      {{ form.tipo }}
+      {% if form.tipo.errors %}<div class="text-danger small">{{ form.tipo.errors }}</div>{% endif %}
+    </div>
+
+    <!-- Números -->
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label" for="{{ form.numero_indicacao.id_for_label }}">Nº da Indicação/Emenda</label>
+        {{ form.numero_indicacao }}
+        {% if form.numero_indicacao.errors %}<div class="text-danger small">{{ form.numero_indicacao.errors }}</div>{% endif %}
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label" for="{{ form.numero_proposta.id_for_label }}">Nº da Proposta</label>
+        {{ form.numero_proposta }}
+        {% if form.numero_proposta.errors %}<div class="text-danger small">{{ form.numero_proposta.errors }}</div>{% endif %}
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label" for="{{ form.numero_convenio.id_for_label }}">Nº do Convênio/Instrumento</label>
+        {{ form.numero_convenio }}
+        {% if form.numero_convenio.errors %}<div class="text-danger small">{{ form.numero_convenio.errors }}</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Parlamentar + Órgão -->
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="{{ form.parlamentar_nome.id_for_label }}">Parlamentar</label>
+        {{ form.parlamentar_nome }}
+        {% if form.parlamentar_nome.errors %}<div class="text-danger small">{{ form.parlamentar_nome.errors }}</div>{% endif %}
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="{{ form.orgao_concedente.id_for_label }}">Órgão concedente</label>
+        {{ form.orgao_concedente }}
+        {% if form.orgao_concedente.errors %}<div class="text-danger small">{{ form.orgao_concedente.errors }}</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Objeto -->
+    <div class="mb-3">
+      <label class="form-label" for="{{ form.objeto.id_for_label }}">Objeto</label>
+      {{ form.objeto }}
+      {% if form.objeto.errors %}<div class="text-danger small">{{ form.objeto.errors }}</div>{% endif %}
+    </div>
+
+    <!-- Valores -->
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="{{ form.valor_repasse.id_for_label }}">Valor repasse</label>
+        {{ form.valor_repasse }}
+        {% if form.valor_repasse.errors %}<div class="text-danger small">{{ form.valor_repasse.errors }}</div>{% endif %}
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="{{ form.valor_contrapartida.id_for_label }}">Valor contrapartida</label>
+        {{ form.valor_contrapartida }}
+        {% if form.valor_contrapartida.errors %}<div class="text-danger small">{{ form.valor_contrapartida.errors }}</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Vigência -->
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="{{ form.vigencia_inicio.id_for_label }}">Vigência início</label>
+        {{ form.vigencia_inicio }}
+        {% if form.vigencia_inicio.errors %}<div class="text-danger small">{{ form.vigencia_inicio.errors }}</div>{% endif %}
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="{{ form.vigencia_fim.id_for_label }}">Vigência fim</label>
+        {{ form.vigencia_fim }}
+        {% if form.vigencia_fim.errors %}<div class="text-danger small">{{ form.vigencia_fim.errors }}</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- ✅ Repasse recebido (Órgão pagou?) -->
+    <div class="mb-3 form-check">
+      {{ form.repasse_recebido }}
+      <label class="form-check-label" for="{{ form.repasse_recebido.id_for_label }}">
+        Repasse recebido (Órgão já pagou?)
+      </label>
+      {% if form.repasse_recebido.errors %}<div class="text-danger small">{{ form.repasse_recebido.errors }}</div>{% endif %}
+    </div>
+
+    <!-- Licitação -->
+    <div class="mb-3 form-check">
+      {{ form.foi_licitado }}
+      <label class="form-check-label" for="{{ form.foi_licitado.id_for_label }}">
+        Foi licitado
+      </label>
+      {% if form.foi_licitado.errors %}<div class="text-danger small">{{ form.foi_licitado.errors }}</div>{% endif %}
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="{{ form.modalidade.id_for_label }}">Modalidade</label>
+        {{ form.modalidade }}
+        {% if form.modalidade.errors %}<div class="text-danger small">{{ form.modalidade.errors }}</div>{% endif %}
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label" for="{{ form.numero_processo_licitatorio.id_for_label }}">Número processo licitatório</label>
+        {{ form.numero_processo_licitatorio }}
+        {% if form.numero_processo_licitatorio.errors %}<div class="text-danger small">{{ form.numero_processo_licitatorio.errors }}</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="mb-3">
+      <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+      {{ form.status }}
+      {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors }}</div>{% endif %}
+    </div>
+
+    <!-- Observações -->
+    <div class="mb-3">
+      <label class="form-label" for="{{ form.observacoes.id_for_label }}">Observações</label>
+      {{ form.observacoes }}
+      {% if form.observacoes.errors %}<div class="text-danger small">{{ form.observacoes.errors }}</div>{% endif %}
+    </div>
+
+    <!-- Erros gerais -->
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+  </div>
+
+  <div class="card-footer d-flex justify-content-between">
+    <a class="btn btn-outline-secondary" href="{% url 'convenios:list' %}">Voltar</a>
+
+    <button class="btn btn-success" type="submit">
+      {% if editando %}Atualizar{% else %}Salvar{% endif %}
+    </button>
+  </div>
+</form>
+
+{% endblock %}
