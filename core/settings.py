@@ -137,9 +137,7 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-# OBRIGATÓRIO PARA PRODUÇÃO / COLLECTSTATIC
 STATIC_ROOT = BASE_DIR / "staticfiles"
-"static"]
 
 
 # Default primary key field type
